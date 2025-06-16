@@ -9,21 +9,29 @@ trigger:
 pool:
   vmImage: windows-latest
 
-variables:
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
-
-#Buildling Application
 steps:
-- task: VSBuild@1
+# Restore NuGet packages
+- task: DotNetCoreCLI@2
   inputs:
-    solution: '**/*.sln'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PackageAsSingleFile=false /p:SkipInvalidConfigurations=true /p:PublishUrl="$(Build.ArtifactStagingDirectory)\Published"'
-    platform: '$(buildPlatform)'
-    configuration:  '$(buildConfiguration)'
-#Publishing the Build Artifact
+    command: 'restore'
+    projects: 'pipelines-dotnet-core.csproj'
+
+# Build the project
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: 'pipelines-dotnet-core.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+# Publish the output
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'publish'
+    projects: 'pipelines-dotnet-core.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/Published'
+
+# Publish build artifacts
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)\Published'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/Published'
     ArtifactName: 'drop'
-    publishLocation: 'Container'
