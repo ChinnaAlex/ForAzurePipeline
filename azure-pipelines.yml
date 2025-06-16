@@ -7,11 +7,23 @@ trigger:
 - master
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: windows-latest
 
 variables:
+  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
+#Buildling Application
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+- task: VSBuild@1
+  inputs:
+    solution: '**/*.sln'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PackageAsSingleFile=false /p:SkipInvalidConfigurations=true /p:PublishUrl="$(Build.ArtifactStagingDirectory)\Published"'
+    platform: '$(buildPlatform)'
+    configuration:  '$(buildConfiguration)'
+#Publishing the Build Artifact
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)\Published'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
